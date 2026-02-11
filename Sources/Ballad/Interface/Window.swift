@@ -148,6 +148,7 @@ struct WindowFlags: OptionSet {
     }
 #elseif os(Linux)
     import CX11
+    import CSkia
 
     class BWindow {
         private var _title: String
@@ -183,7 +184,7 @@ struct WindowFlags: OptionSet {
             XFlush(display)  // make immediate
         }
 
-        func test() {
+        func test_NOSKIA() {
             self.display = XOpenDisplay(nil)
             guard let display = display else {
                 print("Cannot open display")
@@ -236,6 +237,91 @@ struct WindowFlags: OptionSet {
                     break
                 }
             }
+            XDestroyWindow(display, window)
+            XCloseDisplay(display)
+        }
+
+        func test() {
+            self.display = XOpenDisplay(nil)
+            guard let display = display else {
+                print("Cannot open display")
+                return
+            }
+
+            screen = XDefaultScreen(display)
+
+            let rootWindow = XRootWindow(display, screen)
+            let white = XWhitePixel(display, screen)
+            let black = XBlackPixel(display, screen)
+
+            let point = self._frame.leftTop()
+
+            let width = Int32(self._frame.width())
+            let height = Int32(self._frame.height())
+
+            window = XCreateSimpleWindow(
+                display,
+                rootWindow,
+                Int32(point.x),
+                Int32(point.y),
+                UInt32(width),
+                UInt32(height),
+                1,  // border width
+                black,  // border
+                white  // bg
+            )
+
+            XStoreName(display, window, self._title)
+
+            XSelectInput(display, window, ExposureMask | KeyPressMask)
+
+            XMapWindow(display, window)
+
+            let surface = skia_surface_create(width, height)
+            let canvas = skia_surface_get_canvas(surface)
+
+            let gc = XCreateGC(display, window, 0, nil)
+
+            var event = XEvent()
+            var running = true
+            while running {
+                XNextEvent(display, &event)
+                switch event.type {
+                case Expose:
+                    skia_canvas_clear(canvas, 0xFF25_00AB)
+
+                    let paint = skia_paint_create()
+                    skia_paint_set_color(paint, 0xFFF0_0E_FF)
+                    skia_canvas_draw_circle(canvas, 100, 100, 50, paint)
+                    skia_paint_destroy(paint)
+
+                    if let pixels = skia_surface_get_pixels(surface) {
+                        let visual = XDefaultVisual(display, screen)
+                        let depth = XDefaultDepth(display, screen)
+
+                        let ximage = XCreateImage(
+                            display, visual, UInt32(depth),
+                            ZPixmap, 0,
+                            UnsafeMutableRawPointer(mutating: pixels),
+                            UInt32(width), UInt32(height),
+                            32, 0
+                        )
+
+                        XPutImage(
+                            display, window, gc, ximage, 0, 0, 0, 0, UInt32(width), UInt32(height))
+                        ximage?.pointee.data = nil  // holding on to skia memory as to not let x11 free it
+                        // XDestroyImage(ximage) - blarghh
+                    }
+
+                case KeyPress:
+                    running = false
+                default:
+                    break
+                }
+            }
+
+            XFreeGC(display, gc)
+            skia_surface_destroy(surface)
             XDestroyWindow(display, window)
             XCloseDisplay(display)
         }
