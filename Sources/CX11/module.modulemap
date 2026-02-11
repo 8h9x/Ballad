@@ -1,0 +1,5 @@
+module CX11 [system] {
+    header "/usr/include/X11/Xlib.h"
+    link "X11"
+    export *
+}

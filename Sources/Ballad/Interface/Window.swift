@@ -128,22 +128,116 @@ struct WindowFlags: OptionSet {
             }
         }
     }
-#endif
 
-func WindowProc(_ hwnd: HWND?, _ uMsg: UINT, _ wParam: WPARAM, _ lParam: LPARAM) -> LRESULT {
-    switch uMsg {
-    case UINT(WM_DESTROY):
-        PostQuitMessage(0)
-        return 0
-    case UINT(WM_PAINT):
-        var ps = PAINTSTRUCT()
-        let hdc = BeginPaint(hwnd, &ps)
-        if let stockBrush = GetStockObject(WHITE_BRUSH) {
-            FillRect(hdc, &ps.rcPaint, stockBrush.assumingMemoryBound(to: HBRUSH__.self))
+    func WindowProc(_ hwnd: HWND?, _ uMsg: UINT, _ wParam: WPARAM, _ lParam: LPARAM) -> LRESULT {
+        switch uMsg {
+        case UINT(WM_DESTROY):
+            PostQuitMessage(0)
+            return 0
+        case UINT(WM_PAINT):
+            var ps = PAINTSTRUCT()
+            let hdc = BeginPaint(hwnd, &ps)
+            if let stockBrush = GetStockObject(WHITE_BRUSH) {
+                FillRect(hdc, &ps.rcPaint, stockBrush.assumingMemoryBound(to: HBRUSH__.self))
+            }
+            EndPaint(hwnd, &ps)
+            return 0
+        default:
+            return DefWindowProcW(hwnd, uMsg, wParam, lParam)
         }
-        EndPaint(hwnd, &ps)
-        return 0
-    default:
-        return DefWindowProcW(hwnd, uMsg, wParam, lParam)
     }
-}
+#elseif os(Linux)
+    import CX11
+
+    class BWindow {
+        private var _title: String
+        private var _frame: BRect
+        private var display: OpaquePointer?
+        private var window: Window = 0
+        private var screen: Int32 = 0
+
+        init(_ frame: BRect, _ title: String, _ flags: WindowFlags) {
+            self._title = title
+            self._frame = frame
+        }
+
+        func moveBy(_ horizontal: Float, _ vertical: Float) {
+            guard let display = self.display else { return }
+
+            self._frame.setLeftTop(self._frame.leftTop() + BPoint(horizontal, vertical))
+            self._frame.setRightBottom(self._frame.rightBottom() + BPoint(horizontal, vertical))
+
+            let point = self._frame.leftTop()
+
+            XMoveWindow(display, self.window, Int32(point.x), Int32(point.y))
+            XFlush(display)  // make immediate
+        }
+
+        func resizeBy(_ horizontal: Float, _ vertical: Float) {
+            guard let display = self.display else { return }
+
+            self._frame.setRightBottom(self._frame.rightBottom() + BPoint(horizontal, vertical))
+
+            XResizeWindow(
+                display, self.window, UInt32(self._frame.width()), UInt32(self._frame.height()))
+            XFlush(display)  // make immediate
+        }
+
+        func test() {
+            self.display = XOpenDisplay(nil)
+            guard let display = display else {
+                print("Cannot open display")
+                return
+            }
+
+            screen = XDefaultScreen(display)
+
+            let rootWindow = XRootWindow(display, screen)
+            let white = XWhitePixel(display, screen)
+            let black = XBlackPixel(display, screen)
+
+            let point = self._frame.leftTop()
+
+            window = XCreateSimpleWindow(
+                display,
+                rootWindow,
+                Int32(point.x),
+                Int32(point.y),
+                UInt32(self._frame.width()),
+                UInt32(self._frame.height()),
+                1,  // border width
+                black,  // border
+                white  // bg
+            )
+
+            // win title
+            XStoreName(display, window, self._title)
+
+            XSelectInput(display, window, ExposureMask | KeyPressMask | ButtonPressMask)
+
+            // show win
+            XMapWindow(display, window)
+
+            var event = XEvent()
+            var running = true
+
+            while running {
+                XNextEvent(display, &event)
+
+                switch event.type {
+                case Expose:
+                    print("expose event")
+                case KeyPress:
+                    print("key pressed")
+                    running = false
+                case ButtonPress:
+                    print("button pressed")
+                default:
+                    break
+                }
+            }
+            XDestroyWindow(display, window)
+            XCloseDisplay(display)
+        }
+    }
+#endif
