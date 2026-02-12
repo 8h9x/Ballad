@@ -18,7 +18,7 @@ class BAlert {
     }
 
     func alertPosition(_ width: Float, _ height: Float) -> BPoint {
-        return BPoint(width, height)
+        return BPoint(x: width, y: height)
     }
 
     func buttonAt(_ index: Int32) -> BButton {

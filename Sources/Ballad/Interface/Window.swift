@@ -38,8 +38,9 @@ struct WindowFlags: OptionSet {
 
         // translate
         func moveBy(_ horizontal: Float, _ vertical: Float) {
-            self._frame.setLeftTop(self._frame.leftTop() + BPoint(horizontal, vertical))
-            self._frame.setRightBottom(self._frame.rightBottom() + BPoint(horizontal, vertical))
+            self._frame.setLeftTop(self._frame.leftTop() + BPoint(x: horizontal, y: vertical))
+            self._frame.setRightBottom(
+                self._frame.rightBottom() + BPoint(x: horizontal, y: vertical))
 
             let point = self._frame.leftTop()
 
@@ -57,7 +58,8 @@ struct WindowFlags: OptionSet {
         }
 
         func resizeBy(_ horizontal: Float, _ vertical: Float) {
-            self._frame.setRightBottom(self._frame.rightBottom() + BPoint(horizontal, vertical))
+            self._frame.setRightBottom(
+                self._frame.rightBottom() + BPoint(x: horizontal, y: vertical))
 
             SetWindowPos(
                 self.hwnd, nil, 0, 0, Int32(self._frame.width()), Int32(self._frame.height()),
@@ -74,6 +76,17 @@ struct WindowFlags: OptionSet {
 
         func title() -> String {
             return self._title
+        }
+
+        func reframe(_ newFrame: BRect) {
+            let deltaX = newFrame.left - self._frame.left
+            let deltaY = newFrame.top - self._frame.top
+
+            let deltaWidth = newFrame.width() - self._frame.width()
+            let deltaHeight = newFrame.height() - self._frame.height()
+
+            self.moveBy(Float(deltaX), Float(deltaY))
+            self.resizeBy(Float(deltaWidth), Float(deltaHeight))
         }
 
         func test() {
@@ -181,6 +194,17 @@ struct WindowFlags: OptionSet {
             XResizeWindow(
                 display, self.window, UInt32(self._frame.width()), UInt32(self._frame.height()))
             XFlush(display)  // make immediate
+        }
+
+        func reframe(_ newFrame: BRect) {
+            let deltaX = newFrame.left - self._frame.left
+            let deltaY = newFrame.top - self._frame.top
+
+            let deltaWidth = newFrame.width() - self._frame.width()
+            let deltaHeight = newFrame.height() - self._frame.height()
+
+            self.moveBy(Float(deltaX), Float(deltaY))
+            self.resizeBy(Float(deltaWidth), Float(deltaHeight))
         }
 
         func test() {

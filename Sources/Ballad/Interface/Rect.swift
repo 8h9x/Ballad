@@ -1,22 +1,25 @@
-class BRect {
-    private var left: Float = 0
-    private var top: Float = 0
-    private var right: Float = 0
-    private var bottom: Float = 0
+struct BRect: Equatable, Sendable {
+    public var left: Float = 0
+    public var top: Float = 0
+    public var right: Float = 0
+    public var bottom: Float = 0
 
-    private var _width: Float = 0
-    private var _height: Float = 0
+    static let zero = BRect(left: 0, top: 0, right: 0, bottom: 0)
 
-    init(_ left: Float, _ top: Float, _ right: Float, _ bottom: Float) {
-        self.set(left, top, right, bottom)
+    var description: String {
+        return "BRect(left:\(left), top:\(top), right:\(right), bottom:\(bottom))"
     }
 
-    init(_ leftTop: BPoint, _ rightBottom: BPoint) {
+    init(left: Float, top: Float, right: Float, bottom: Float) {
+        self.set(left: left, top: top, right: right, bottom: bottom)
+    }
 
+    init(leftTop: BPoint, rightBottom: BPoint) {
+        self.init(left: leftTop.x, top: leftTop.y, right: rightBottom.x, bottom: rightBottom.y)
     }
 
     init(_ rect: BRect) {
-
+        self.init(leftTop: rect.leftTop(), rightBottom: rect.rightBottom())
     }
 
     init() {
@@ -24,87 +27,110 @@ class BRect {
     }
 
     func contains(_ point: BPoint) -> Bool {
-        return false
+        return point.x >= self.left && point.x <= self.right
+            && point.y >= self.top && point.y <= self.bottom
     }
 
     func contains(_ rect: BRect) -> Bool {
-        return false
+        return rect.left >= self.left && rect.right <= self.right
+            && rect.top >= self.top && rect.bottom <= self.bottom
     }
 
     func intersects(_ rect: BRect) -> Bool {
-        return false
+        if !self.isValid() || !rect.isValid() {
+            return false
+        }
+
+        return
+            !(rect.left > self.right || rect.right < self.left
+            || rect.top > self.bottom || rect.bottom < self.top)
     }
 
-    func insetBy(_ x: Float, _ y: Float) {
-
+    mutating func insetBy(x: Float, y: Float) {
+        self.left += x
+        self.top += y
+        self.right -= x
+        self.bottom -= y
     }
 
-    func insetBy(_ point: BPoint) {
-
+    mutating func insetBy(_ point: BPoint) {
+        self.insetBy(x: point.x, y: point.y)
     }
 
-    func insetBySelf(_ x: Float, _ y: Float) {
+    // func insetBySelf(x: Float, y: Float) {
 
+    // }
+
+    // func insetBySelf(_ point: BPoint) {
+
+    // }
+
+    func insetByCopy(x: Float, y: Float) -> BRect {
+        var copy = BRect(self)
+        copy.insetBy(x: x, y: y)
+        return copy
     }
 
-    func insetBySelf(_ point: BPoint) {
-
+    func insetByCopy(_ point: BPoint) -> BRect {
+        return self.insetByCopy(x: point.x, y: point.y)
     }
 
-    func insetByCopy(_ x: Float, _ y: Float) {
-
+    mutating func offsetBy(x: Float, y: Float) {
+        self.left += x
+        self.top += y
+        self.right += x
+        self.bottom += y
     }
 
-    func insetByCopy(_ point: BPoint) {
-
+    mutating func offsetBy(_ point: BPoint) {
+        self.offsetBy(x: point.x, y: point.y)
     }
 
-    func offsetBy(_ x: Float, _ y: Float) {
+    // func offsetBySelf(x: Float, y: Float) {
 
+    // }
+
+    // func offsetBySelf(_ point: BPoint) {
+
+    // }
+
+    func offsetByCopy(x: Float, y: Float) -> BRect {
+        var copy = BRect(self)
+        copy.offsetBy(x: x, y: y)
+        return copy
     }
 
-    func offsetBy(_ point: BPoint) {
-
+    func offsetByCopy(_ point: BPoint) -> BRect {
+        return self.offsetByCopy(x: point.x, y: point.y)
     }
 
-    func offsetBySelf(_ x: Float, _ y: Float) {
-
+    mutating func offsetTo(x: Float, y: Float) {
+        self.left = x
+        self.top = y
+        self.right = (right - left) + x
+        self.bottom = (bottom - top) + y
     }
 
-    func offsetBySelf(_ point: BPoint) {
-
+    mutating func offsetTo(_ point: BPoint) {
+        self.offsetTo(x: point.x, y: point.y)
     }
 
-    func offsetByCopy(_ x: Float, _ y: Float) {
+    // func offsetToSelf(x: Float, y: Float) {
 
+    // }
+
+    // func offsetToSelf(_ point: BPoint) {
+
+    // }
+
+    func offsetToCopy(x: Float, y: Float) -> BRect {
+        var copy = BRect(self)
+        copy.offsetTo(x: x, y: y)
+        return copy
     }
 
-    func offsetByCopy(_ point: BPoint) {
-
-    }
-
-    func offsetTo(_ x: Float, _ y: Float) {
-
-    }
-
-    func offsetTo(_ point: BPoint) {
-
-    }
-
-    func offsetToSelf(_ x: Float, _ y: Float) {
-
-    }
-
-    func offsetToSelf(_ point: BPoint) {
-
-    }
-
-    func offsetToCopy(_ x: Float, _ y: Float) {
-
-    }
-
-    func offsetToCopy(_ point: BPoint) {
-
+    func offsetToCopy(_ point: BPoint) -> BRect {
+        return self.offsetToCopy(x: point.x, y: point.y)
     }
 
     func isValid() -> Bool {
@@ -112,64 +138,102 @@ class BRect {
     }
 
     func printToStream() {
-
+        print(self)
     }
 
-    func set(_ left: Float, _ top: Float, _ right: Float, _ bottom: Float) {
+    mutating func set(left: Float, top: Float, right: Float, bottom: Float) {
         self.left = left
         self.top = top
         self.right = right
         self.bottom = bottom
-
-        self._width = right - left
-        self._height = bottom - top
     }
 
-    func setLeftTop(_ point: BPoint) {
-        self.set(point.x, point.y, self.right, self.bottom)
+    mutating func setLeftTop(_ point: BPoint) {
+        self.left = point.x
+        self.top = point.y
     }
 
-    func setLeftBottom(_ point: BPoint) {
-        self.set(point.x, self.top, self.right, point.y)
+    mutating func setLeftBottom(_ point: BPoint) {
+        self.left = point.x
+        self.bottom = point.y
     }
 
-    func setRightTop(_ point: BPoint) {
-        self.set(self.left, point.y, point.x, self.bottom)
+    mutating func setRightTop(_ point: BPoint) {
+        self.right = point.x
+        self.top = point.y
     }
 
-    func setRightBottom(_ point: BPoint) {
-        self.set(self.left, self.top, point.x, point.y)
+    mutating func setRightBottom(_ point: BPoint) {
+        self.right = point.x
+        self.bottom = point.y
     }
 
     func leftTop() -> BPoint {
-        return BPoint(self.left, self.top)
+        return BPoint(x: self.left, y: self.top)
     }
 
     func leftBottom() -> BPoint {
-        return BPoint(self.left, self.bottom)
+        return BPoint(x: self.left, y: self.bottom)
     }
 
     func rightTop() -> BPoint {
-        return BPoint(self.right, self.top)
+        return BPoint(x: self.right, y: self.top)
     }
 
     func rightBottom() -> BPoint {
-        return BPoint(self.right, self.bottom)
+        return BPoint(x: self.right, y: self.bottom)
     }
 
     func width() -> Float {
-        return self._width
+        return self.right - self.left
     }
 
     func integerWidth() -> Int32 {
-        return Int32(self._width)
+        return Int32((self.right - self.left).rounded(.up))
     }
 
     func height() -> Float {
-        return self._height
+        return self.bottom - self.top
     }
 
     func integerHeight() -> Int32 {
-        return Int32(self._height)
+        return Int32((self.bottom - self.top).rounded(.up))
+    }
+
+    static func == (lhs: BRect, rhs: BRect) -> Bool {
+        return lhs.left == rhs.left && lhs.right == rhs.right && lhs.top == rhs.top
+            && lhs.bottom == rhs.bottom
+    }
+
+    static func & (lhs: BRect, rhs: BRect) -> BRect {
+        return BRect(
+            left: max(lhs.left, rhs.left),
+            top: max(lhs.top, rhs.top),
+            right: min(lhs.right, rhs.right),
+            bottom: min(lhs.bottom, rhs.bottom)
+        )
+    }
+
+    static func &= (lhs: inout BRect, rhs: BRect) {
+        lhs.left = max(lhs.left, rhs.left)
+        lhs.top = max(lhs.top, rhs.top)
+        lhs.right = min(lhs.right, rhs.right)
+        lhs.bottom = min(lhs.bottom, rhs.bottom)
+    }
+
+    static func | (lhs: BRect, rhs: BRect) -> BRect {
+        return BRect(
+            left: min(lhs.left, rhs.left),
+            top: min(lhs.top, rhs.top),
+            right: max(lhs.right, rhs.right),
+            bottom: max(lhs.bottom, rhs.bottom)
+        )
+    }
+
+    static func |= (lhs: inout BRect, rhs: BRect) {
+        lhs.left = min(lhs.left, rhs.left)
+        lhs.top = min(lhs.top, rhs.top)
+        lhs.right = max(lhs.right, rhs.right)
+        lhs.bottom = max(lhs.bottom, rhs.bottom)
     }
 }

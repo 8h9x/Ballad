@@ -1,21 +1,42 @@
-class BPoint: Equatable {
+struct BPoint: Equatable, Sendable {
     public var x: Float = 0
     public var y: Float = 0
 
+    static let zero = BPoint(x: 0, y: 0)
+
     var description: String {
-        return "BPoint(\(x), \(y))"
+        return "BPoint(x:\(x), y:\(y))"
     }
 
-    init(_ x: Float, _ y: Float) {
-        self.set(x, y)
+    init(x: Float, y: Float) {
+        self.x = x
+        self.y = y
     }
 
     init(_ point: BPoint) {
-        // self.set(x, y)
+        self.init(x: point.x, y: point.y)
     }
 
     init() {
-        // self.set(x, y)
+
+    }
+
+    mutating func constrainTo(_ rect: BRect) {
+        self.x = max(min(x, rect.right), rect.left)
+        self.y = max(min(y, rect.bottom), rect.top)
+    }
+
+    func printToStream() {
+        print(self)
+    }
+
+    mutating func set(x: Float, y: Float) {
+        self.x = x
+        self.y = y
+    }
+
+    static prefix func - (point: BPoint) -> BPoint {
+        return BPoint(x: -point.x, y: -point.y)
     }
 
     static func == (lhs: BPoint, rhs: BPoint) -> Bool {
@@ -23,33 +44,20 @@ class BPoint: Equatable {
     }
 
     static func + (lhs: BPoint, rhs: BPoint) -> BPoint {
-        BPoint(lhs.x + rhs.x, lhs.y + rhs.y)
+        BPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
     }
 
-    static func += (lhs: BPoint, rhs: BPoint) {
+    static func += (lhs: inout BPoint, rhs: BPoint) {
         lhs.x += rhs.x
         lhs.y += rhs.y
     }
 
     static func - (lhs: BPoint, rhs: BPoint) -> BPoint {
-        BPoint(lhs.x - rhs.x, lhs.y - rhs.y)
+        BPoint(x: lhs.x - rhs.x, y: lhs.y - rhs.y)
     }
 
-    static func -= (lhs: BPoint, rhs: BPoint) {
+    static func -= (lhs: inout BPoint, rhs: BPoint) {
         lhs.x -= rhs.x
         lhs.y -= rhs.y
-    }
-
-    func constrainTo(_ rect: BRect) {
-
-    }
-
-    func printToStream() {
-        print(self)
-    }
-
-    func set(_ x: Float, _ y: Float) {
-        self.x = x
-        self.y = y
     }
 }

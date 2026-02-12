@@ -6,15 +6,18 @@ import Dispatch
 @main
 struct Ballad {
     static func main() {
-        let rect = BRect(500, 200, 1500, 900)
+        let rect = BRect(left: 50, top: 50, right: 500, bottom: 800)
+        let rect2 = BRect(left: 225, top: 500, right: 800, bottom: 1000)
         nonisolated(unsafe) let win = BWindow(rect, "My test window", [])
 
         DispatchQueue.global().asyncAfter(deadline: .now() + 2.0) {
-            win.moveBy(-100, -100)
+            // win.moveBy(-100, -100)
+            win.reframe(rect2)
         }
 
         DispatchQueue.global().asyncAfter(deadline: .now() + 4.0) {
-            win.resizeBy(100, 100)
+            // win.resizeBy(100, 100)
+            win.reframe(rect2 | rect)
         }
 
         win.test()
