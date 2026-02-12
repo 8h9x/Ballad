@@ -1,0 +1,5 @@
+module CSkia [system] {
+    header "skia_bridge.h"
+    link "skia"
+    export *
+}
