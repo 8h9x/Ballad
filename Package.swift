@@ -12,6 +12,7 @@ import PackageDescription
     let platformDependencies: [Target.Dependency] = ["CX11", "CSkia"]
 
     let platformLinkerSettings: [LinkerSetting] = [
+        .linkedLibrary("m"),
         .unsafeFlags(["-L/usr/local/lib"]),
         .unsafeFlags(["-L/$HOME/skia/out/Shared"]),
         .unsafeFlags(["-lskia_bridge", "-lskia", "-lstdc++"]),

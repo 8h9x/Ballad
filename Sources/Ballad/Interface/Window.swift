@@ -178,8 +178,9 @@ struct WindowFlags: OptionSet {
         func moveBy(_ horizontal: Float, _ vertical: Float) {
             guard let display = self.display else { return }
 
-            self._frame.setLeftTop(self._frame.leftTop() + BPoint(horizontal, vertical))
-            self._frame.setRightBottom(self._frame.rightBottom() + BPoint(horizontal, vertical))
+            self._frame.setLeftTop(self._frame.leftTop() + BPoint(x: horizontal, y: vertical))
+            self._frame.setRightBottom(
+                self._frame.rightBottom() + BPoint(x: horizontal, y: vertical))
 
             let point = self._frame.leftTop()
 
@@ -190,7 +191,8 @@ struct WindowFlags: OptionSet {
         func resizeBy(_ horizontal: Float, _ vertical: Float) {
             guard let display = self.display else { return }
 
-            self._frame.setRightBottom(self._frame.rightBottom() + BPoint(horizontal, vertical))
+            self._frame.setRightBottom(
+                self._frame.rightBottom() + BPoint(x: horizontal, y: vertical))
 
             XResizeWindow(
                 display, self.window, UInt32(self._frame.width()), UInt32(self._frame.height()))
@@ -242,6 +244,9 @@ struct WindowFlags: OptionSet {
 
             // show win
             XMapWindow(display, window)
+
+            XMoveWindow(display, window, Int32(point.x), Int32(point.y))
+            XFlush(display)
 
             var event = XEvent()
             var running = true
@@ -295,11 +300,16 @@ struct WindowFlags: OptionSet {
                 white  // bg
             )
 
+            // win title
             XStoreName(display, window, self._title)
 
             XSelectInput(display, window, ExposureMask | KeyPressMask)
 
+            // show win
             XMapWindow(display, window)
+
+            XMoveWindow(display, window, Int32(point.x), Int32(point.y))
+            XFlush(display)
 
             let surface = skia_surface_create(width, height)
             let canvas = skia_surface_get_canvas(surface)
