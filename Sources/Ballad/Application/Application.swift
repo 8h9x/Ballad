@@ -3,7 +3,7 @@ protocol BApplicationDelegate: AnyObject {
     func applicationDidActivate(_ application: BApplication)
 }
 
-class BApplication {
+class BApplication: BWindowDelegate {
     var aboutRequested: (() -> Void)?
     var appActivated: ((_ active: Bool) -> Void)?
     var argvReceived: ((_ argc: Int32, _ argv: String) -> Void)?
@@ -11,6 +11,20 @@ class BApplication {
     var quitRequested: (() -> Bool)?
     var readyToRun: (() -> Void)?
     var refsReceived: ((_ message: BMessage) -> Void)?
+
+    private var windows: [BWindow] = []
+
+    func addWindow(_ window: BWindow) {
+        window.delegate = self
+        self.windows.append(window)
+    }
+
+    internal func windowDidQuit(_ window: BWindow) {
+        self.windows.removeAll { $0 === window }
+        if windows.isEmpty {
+            self.quit()
+        }
+    }
 
     static func appResources() -> BResources {
         return BResources()

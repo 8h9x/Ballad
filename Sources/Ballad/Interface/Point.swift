@@ -8,6 +8,10 @@ struct BPoint: Equatable, Sendable {
         return "BPoint(x:\(x), y:\(y))"
     }
 
+    init() {
+
+    }
+
     init(x: Float, y: Float) {
         self.x = x
         self.y = y
@@ -15,10 +19,6 @@ struct BPoint: Equatable, Sendable {
 
     init(_ point: BPoint) {
         self.init(x: point.x, y: point.y)
-    }
-
-    init() {
-
     }
 
     mutating func constrainTo(_ rect: BRect) {

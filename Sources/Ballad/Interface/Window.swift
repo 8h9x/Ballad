@@ -22,6 +22,10 @@ struct WindowFlags: OptionSet {
     static let closeOnEscape = WindowFlags(rawValue: 0x0080_0000)
 }
 
+protocol BWindowDelegate: AnyObject {
+    func windowDidQuit(_ window: BWindow)
+}
+
 #if os(Windows)
     import WinSDK
 
@@ -30,6 +34,8 @@ struct WindowFlags: OptionSet {
         private var _frame: BRect
 
         private var hwnd: HWND?
+
+        internal weak var delegate: BWindowDelegate?
 
         init(_ frame: BRect, _ title: String, _ flags: WindowFlags) {
             self._title = title
@@ -87,6 +93,10 @@ struct WindowFlags: OptionSet {
 
             self.moveBy(Float(deltaX), Float(deltaY))
             self.resizeBy(Float(deltaWidth), Float(deltaHeight))
+        }
+
+        func quit() {
+            delegate?.windowDidQuit(self)
         }
 
         func test() {
@@ -169,6 +179,8 @@ struct WindowFlags: OptionSet {
         private var display: OpaquePointer?
         private var window: Window = 0
         private var screen: Int32 = 0
+
+        internal weak var delegate: BWindowDelegate?
 
         init(_ frame: BRect, _ title: String, _ flags: WindowFlags) {
             self._title = title

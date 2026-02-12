@@ -10,6 +10,10 @@ struct BRect: Equatable, Sendable {
         return "BRect(left:\(left), top:\(top), right:\(right), bottom:\(bottom))"
     }
 
+    init() {
+
+    }
+
     init(left: Float, top: Float, right: Float, bottom: Float) {
         self.set(left: left, top: top, right: right, bottom: bottom)
     }
@@ -20,10 +24,6 @@ struct BRect: Equatable, Sendable {
 
     init(_ rect: BRect) {
         self.init(leftTop: rect.leftTop(), rightBottom: rect.rightBottom())
-    }
-
-    init() {
-
     }
 
     func contains(_ point: BPoint) -> Bool {
