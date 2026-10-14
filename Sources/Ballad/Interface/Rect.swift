@@ -12,6 +12,10 @@ public struct Rect: Equatable, Sendable {
         bottom - top
     }
     
+    public var size: Size {
+        Size(right - left, bottom - top)
+    }
+    
     public var leftTop: Point {
         get { Point(left, top) }
         
@@ -67,8 +71,21 @@ public struct Rect: Equatable, Sendable {
         self.init(left: leftTop.x, top: leftTop.y, right: rightBottom.x, bottom: rightBottom.y)
     }
     
+    public init(leftTop: Point, size: Size) {
+        self.init(
+            left: leftTop.x, 
+            top: leftTop.y,
+            right: leftTop.x + size.width,
+            bottom: leftTop.y + size.height
+        )
+    }
+    
     public init(width: Double, height: Double) {
         self.init(left: 0, top: 0, right: width, bottom: height)
+    }
+    
+    public init(side: Double) {
+        self.init(width: side - 1, height: side - 1)
     }
     
     public func insetBy(x: Double, y: Double) -> Rect {
@@ -138,4 +155,6 @@ public struct Rect: Equatable, Sendable {
             rect.bottom <= bottom
         )
     }
+    
+    public static let zero = Rect(left: 0, top: 0, right: 0, bottom: 0)
 }
